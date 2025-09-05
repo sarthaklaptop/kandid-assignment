@@ -12,9 +12,9 @@ export default function Home() {
     if (isPending) return;
 
     if (session) {
-      router.replace("/dashboard"); // logged in → dashboard
+      router.replace("/dashboard"); 
     } else {
-      router.replace("/login"); // not logged in → login
+      router.replace("/login");
     }
   }, [session, isPending, router]);
 
