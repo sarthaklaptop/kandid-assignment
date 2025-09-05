@@ -89,19 +89,6 @@ export default function LoginPage() {
     } catch (error) {
       toast.error("An error occurred. Please try again.");
     }
-    // signUp.email(
-    //   { email, password, name: `${firstName} ${lastName}` },
-    //   {
-    //     onError: (ctx) => {
-    //       toast.error(ctx.error.message);
-    //       setIsSigningUp(false);
-    //     },
-    //     onSuccess: () => {
-    //       toast.success("Account created successfully!");
-    //       router.push("/dashboard");
-    //     },
-    //   }
-    // );
   };
 
   const handleSignin = async () => {

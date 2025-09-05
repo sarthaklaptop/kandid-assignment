@@ -8,6 +8,13 @@
       "when": 1756993502634,
       "tag": "0000_woozy_the_fury",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1757072821172,
+      "tag": "0001_wandering_vargas",
+      "breakpoints": true
     }
   ]
 }
