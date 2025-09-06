@@ -52,15 +52,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <SidebarProvider
-      open={!isCollapsed}                    
+      open={!isCollapsed}
       onOpenChange={(open) => setCollapse(!open)}
     >
-      <div className="flex h-screen">
+      <div className="flex h-screen w-screen overflow-hidden">
         <AppSidebar />
-        <main className="flex-1 p-6">
-          <SidebarTrigger />
-          {children}
-        </main>
+
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <header className="flex items-center px-6 py-4 border-b">
+            <SidebarTrigger />
+            <h1 className="text-lg font-semibold">Dashboard</h1>
+          </header>
+
+          <main className="flex-1 overflow-auto px-6 py-4">
+            {children}
+          </main>
+        </div>
       </div>
     </SidebarProvider>
   );

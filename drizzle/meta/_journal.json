@@ -15,6 +15,13 @@
       "when": 1757072821172,
       "tag": "0001_wandering_vargas",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1757134572168,
+      "tag": "0002_breezy_justice",
+      "breakpoints": true
     }
   ]
 }
