@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
       "avatars.githubusercontent.com",
       "lh3.googleusercontent.com",
       "github.com",
+      "cdn.jsdelivr.net",
     ],
   },
 };

@@ -5,6 +5,7 @@ import {
   integer,
   timestamp,
   pgEnum,
+  varchar,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -28,10 +29,9 @@ export const leadStatusEnum = pgEnum("lead_status", [
 export const campaigns = pgTable("campaigns", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  status: text("status").notNull().default("Active"),
   description: text("description"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Leads table
@@ -54,7 +54,6 @@ export const leads = pgTable("leads", {
     .defaultNow()
     .notNull(),
 });
-
 
 // =================================
 //  ALL APPLICATION RELATIONS
