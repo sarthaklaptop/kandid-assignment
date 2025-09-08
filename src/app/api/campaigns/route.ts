@@ -1,17 +1,28 @@
-import { NextResponse } from "next/server";
+// src/app/api/campaigns/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { campaigns, leads } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { auth } from "@/lib/auth"; // ✅ 1. Import auth
 
-// GET /api/campaigns
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // fetch all campaigns
-    const rawCampaigns = await db.select().from(campaigns);
+    // ✅ 2. Get the current user's session
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = session.user.id;
 
-    // enrich each campaign with lead counts
+    // ✅ 3. Fetch campaigns belonging ONLY to the current user
+    const userCampaigns = await db
+      .select()
+      .from(campaigns)
+      .where(eq(campaigns.userId, userId));
+
     const enriched = await Promise.all(
-      rawCampaigns.map(async (c) => {
+      userCampaigns.map(async (c) => {
         const allLeads = await db
           .select()
           .from(leads)

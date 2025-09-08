@@ -32,10 +32,14 @@ export const campaigns = pgTable("campaigns", {
   status: text("status").notNull().default("Active"),
   description: text("description"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  
+  // 👇 ADD THIS LINE
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
 });
 
 // Leads table
 export const leads = pgTable("leads", {
+  // ... (leads table remains the same)
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   role: text("role"),
@@ -58,16 +62,15 @@ export const leads = pgTable("leads", {
 // =================================
 //  ALL APPLICATION RELATIONS
 // =================================
-// This section defines how ALL tables in your project are related.
 
-// User Relations (from auth schema)
+// ... (User and Session relations remain the same)
 export const usersRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
-  leads: many(leads), // A user can have many leads
+  leads: many(leads),
+  campaigns: many(campaigns), // Add this relation
 }));
 
-// Session Relations (from auth schema)
 export const sessionsRelations = relations(session, ({ one }) => ({
   user: one(user, {
     fields: [session.userId],
@@ -75,12 +78,18 @@ export const sessionsRelations = relations(session, ({ one }) => ({
   }),
 }));
 
-// Campaigns Relations
-export const campaignsRelations = relations(campaigns, ({ many }) => ({
+
+// 👇 REPLACE THE EXISTING campaignsRelations WITH THIS
+export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
   leads: many(leads),
+  owner: one(user, { // Add this relation
+    fields: [campaigns.userId],
+    references: [user.id],
+  }),
 }));
 
-// Leads Relations
+
+// ... (Leads relations remain the same)
 export const leadsRelations = relations(leads, ({ one }) => ({
   owner: one(user, {
     fields: [leads.userId],

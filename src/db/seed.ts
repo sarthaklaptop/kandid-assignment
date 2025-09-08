@@ -74,7 +74,12 @@ async function seed() {
       },
     ];
 
-    const insertedCampaigns = await db.insert(campaigns).values(campaignsData).returning();
+    const baseCampaigns = campaignsData.map(campaign => ({
+      ...campaign,
+      userId: usersData[0].id,
+    }));
+
+    const insertedCampaigns = await db.insert(campaigns).values(baseCampaigns).returning();
     console.log("✅ Inserted Campaigns");
 
     // --- Generate 100 dummy leads (matching your exact schema) ---
@@ -89,10 +94,10 @@ async function seed() {
 
       return {
         name: faker.person.fullName(),
-        role: faker.person.jobTitle(), // Maps to 'role' field
+        role: faker.person.jobTitle(), 
         email: faker.internet.email(),
         company: faker.company.name(),
-        avatarUrl: faker.image.avatar(), // Maps to 'avatarUrl' field
+        avatarUrl: faker.image.avatar(), 
         status: randomStatus,
         campaignId: randomCampaign.id, // This will be the auto-generated serial ID
         userId: randomUser.id,

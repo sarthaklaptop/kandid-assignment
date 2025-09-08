@@ -52,7 +52,7 @@ export default function CampaignsPage() {
   useEffect(() => {
     async function fetchCampaigns() {
       try {
-        const res = await fetch("/api/campaigns");
+        const res = await fetch("/api/campaigns", { credentials: "include" });
         if (!res.ok) throw new Error("Failed to fetch campaigns");
         const data = await res.json();
         setAllCampaigns(data);
@@ -66,10 +66,6 @@ export default function CampaignsPage() {
   }, []);
 
   // ✅ Summary stats
-  const totalCampaigns = allCampaigns.length;
-  const activeCampaigns = allCampaigns.filter(
-    (c) => c.status === "Active"
-  ).length;
   const totalLeads = allCampaigns.reduce((sum, c) => sum + c.totalLeads, 0);
   const totalResponses = allCampaigns.reduce(
     (sum, c) => sum + c.successfulLeads,
@@ -129,27 +125,6 @@ export default function CampaignsPage() {
     } catch (err) {
       console.error("Failed to delete campaign", err);
       toast.error("Failed to delete campaign");
-    }
-  }
-
-  async function handleToggleStatus(campaign: Campaign) {
-    const newStatus = campaign.status === "Active" ? "Paused" : "Active";
-    try {
-      const res = await fetch(`/api/campaigns/${campaign.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (!res.ok) throw new Error("Failed to update status");
-      const updated = await res.json();
-
-      setAllCampaigns((prev) =>
-        prev.map((c) =>
-          c.id === campaign.id ? { ...c, status: updated.status } : c
-        )
-      );
-    } catch (err) {
-      console.error("Failed to update campaign", err);
     }
   }
 
