@@ -25,6 +25,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import toast from "react-hot-toast";
 import { EditCampaignDialog } from "@/components/EditCampaignDialog";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 type Campaign = {
   id: number;
@@ -148,6 +149,46 @@ export default function CampaignsPage() {
       toast.error("Failed to update status");
     }
   }
+
+  const queryClient = useQueryClient();
+
+  // ✅ Status mutation
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const res = await fetch(`/api/campaigns/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) throw new Error("Failed to update status");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Status updated!");
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+    },
+    onError: () => {
+      toast.error("Failed to update status");
+    },
+  });
+
+  // ✅ Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/campaigns/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete campaign");
+      return id;
+    },
+    onSuccess: () => {
+      toast.success("Campaign deleted!");
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+    },
+    onError: () => {
+      toast.error("Failed to delete campaign");
+    },
+  });
 
   return (
     <div className="p-6 space-y-6">
@@ -343,7 +384,12 @@ export default function CampaignsPage() {
                         <Button
                           variant="secondary"
                           size="sm"
-                          onClick={() => handleStatusChange(c.id, "Paused")}
+                          onClick={() =>
+                            statusMutation.mutate({
+                              id: c.id,
+                              status: "Paused",
+                            })
+                          }
                         >
                           Pause
                         </Button>
@@ -351,15 +397,21 @@ export default function CampaignsPage() {
                         <Button
                           variant="default"
                           size="sm"
-                          onClick={() => handleStatusChange(c.id, "Active")}
+                          onClick={() =>
+                            statusMutation.mutate({
+                              id: c.id,
+                              status: "Active",
+                            })
+                          }
                         >
                           Resume
                         </Button>
                       )}
+
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => handleDelete(c.id)}
+                        onClick={() => deleteMutation.mutate(c.id)}
                       >
                         Delete
                       </Button>

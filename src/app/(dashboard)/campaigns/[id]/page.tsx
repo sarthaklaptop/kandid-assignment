@@ -1,63 +1,88 @@
-// src/app/(dashboard)/campaigns/[id]/page.tsx
+// app/(dashboard)/campaigns/page.tsx (client)
+"use client";
 
-import { db } from "@/db";
-import { campaigns, leads } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import Link from "next/link";
-// import ClientCampaignDetail from "./ClientCampaignDetail";
-
-// ✅ shadcn ui
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import ClientCampaignDetail from "./ClientCampaignDetail";
+  Table, TableHeader, TableRow, TableHead, TableBody, TableCell
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { useCampaigns } from "@/lib/ReactQueryProvider";
 
-interface CampaignPageProps {
-  params: { id: string };
-}
+export default function CampaignsPageClient() {
+  const { data, isLoading, isError, error } = useCampaigns();
 
-// ✅ Server Component
-export default async function CampaignDetailPage({ params }: CampaignPageProps) {
-  const campaignId = Number(params.id);
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-6"><Skeleton className="h-8 w-64" /></h1>
+        <div className="rounded-md border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Total Leads</TableHead>
+                <TableHead>Response Rate</TableHead>
+                <TableHead>Progress</TableHead>
+                <TableHead>Created At</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-10" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-10" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    );
+  }
 
-  const [campaign] = await db
-    .select()
-    .from(campaigns)
-    .where(eq(campaigns.id, campaignId));
-
-  const relatedLeads = await db
-    .select()
-    .from(leads)
-    .where(eq(leads.campaignId, campaignId));
-
-  if (!campaign) {
-    return <div className="p-6">Campaign not found</div>;
+  if (isError) {
+    return <div className="p-6 text-red-600">Error loading campaigns: {(error as Error).message}</div>;
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* ✅ Breadcrumb (still server-rendered) */}
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/campaigns">Campaigns</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{campaign.name}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      {/* ✅ Client component handles filtering/search */}
-      <ClientCampaignDetail campaign={campaign} relatedLeads={relatedLeads} />
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Campaigns</h1>
+      <div className="rounded-md border overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Total Leads</TableHead>
+              <TableHead>Response Rate</TableHead>
+              <TableHead>Progress</TableHead>
+              <TableHead>Created At</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data?.map((c: any) => {
+              const responseRate = c.totalLeads > 0 ? Math.round((c.successfulLeads / c.totalLeads) * 100) : 0;
+              return (
+                <TableRow key={c.id}>
+                  <TableCell><Link href={`/campaigns/${c.id}`} className="text-blue-600 hover:underline">{c.name}</Link></TableCell>
+                  <TableCell><Badge>{c.status}</Badge></TableCell>
+                  <TableCell>{c.totalLeads}</TableCell>
+                  <TableCell>{responseRate}%</TableCell>
+                  <TableCell className="w-48"><Progress value={responseRate} /></TableCell>
+                  <TableCell>{new Date(c.createdAt).toLocaleDateString()}</TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

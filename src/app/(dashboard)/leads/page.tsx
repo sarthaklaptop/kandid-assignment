@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Table,
   TableBody,
@@ -24,8 +24,8 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { useLeadsFilterStore } from "@/stores/leadsFilterStore";
-import { useSelectionStore } from "@/stores/selectionStore";
 import { useLeadsSelectionStore } from "@/stores/leadsSelectionStore";
+import { useLeadsInfinite } from "@/lib/ReactQueryProvider";
 
 type Lead = {
   id: number;
@@ -37,14 +37,13 @@ type Lead = {
   email: string;
   company: string | null;
   lastContactDate: string | null;
-  activity?: string[]; // Made optional with default fallback
+  activity?: string[];
   status: {
     label: string;
     color: string;
   };
 };
 
-// Map database statuses to UI styles
 const statusStyles = {
   PENDING: { label: "Pending", color: "bg-yellow-100 text-yellow-700" },
   CONTACTED: { label: "Contacted", color: "bg-blue-100 text-blue-700" },
@@ -53,11 +52,6 @@ const statusStyles = {
 };
 
 export default function LeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  // const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
 
   const {
@@ -68,25 +62,73 @@ export default function LeadsPage() {
     campaignFilter,
     setCampaignFilter,
   } = useLeadsFilterStore();
-  // const { selectedLead, setLead: setSelectedLead } = useSelectionStore();
 
   const { selectedLeadId, setLead: setSelectedLeadId } =
     useLeadsSelectionStore();
 
+  // ✅ Replace manual fetch with React Query infinite query
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useLeadsInfinite({ q: searchQuery, status: statusFilter ?? undefined });
+
+  // Flatten pages → leads
+  const leads = useMemo(() => {
+    if (!data) return [];
+
+    // If you ever switch to infinite query later, handle both cases
+    if (Array.isArray(data)) {
+      return data.map((lead: any) => ({
+        id: lead.id,
+        name: lead.name,
+        role: lead.role,
+        avatar: lead.avatarUrl,
+        email: lead.email,
+        company: lead.company,
+        campaign: lead.campaign?.name,
+        campaignDescription: lead.campaign?.description ?? null,
+        lastContactDate: lead.lastContactDate,
+        activity: lead.activity ?? ["#9ca3af", "#9ca3af", "#9ca3af"],
+        status: statusStyles[lead.status as keyof typeof statusStyles] || {
+          label: "Unknown",
+          color: "bg-gray-200 text-gray-700",
+        },
+      }));
+    }
+
+    if (data.pages) {
+      return data.pages.flatMap((page: any) => {
+        const rows = page?.items || page || [];
+        return rows.map((lead: any) => ({
+          id: lead.id,
+          name: lead.name,
+          role: lead.role,
+          avatar: lead.avatarUrl,
+          email: lead.email,
+          company: lead.company,
+          campaign: lead.campaign?.name,
+          campaignDescription: lead.campaign?.description ?? null,
+          lastContact: lead.lastContactDate,
+          activity: lead.activity ?? ["#9ca3af", "#9ca3af", "#9ca3af"],
+          status: statusStyles[lead.status as keyof typeof statusStyles] || {
+            label: "Unknown",
+            color: "bg-gray-200 text-gray-700",
+          },
+        }));
+      });
+    }
+
+    return [];
+  }, [data]);
+
+  // Apply filtering + sorting
   const processedLeads = useMemo(() => {
     let result = [...leads];
-
-    result = result.filter((lead) =>
-      [lead.name, lead.role, lead.campaign, lead.status.label]
-        .filter(Boolean)
-        .some((field) =>
-          field!.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-    );
-
-    if (statusFilter) {
-      result = result.filter((lead) => lead.status.label === statusFilter);
-    }
 
     if (campaignFilter) {
       result = result.filter((lead) => lead.campaign === campaignFilter);
@@ -101,71 +143,15 @@ export default function LeadsPage() {
     }
 
     return result;
-  }, [searchQuery, statusFilter, campaignFilter, sortOrder, leads]);
-
-  useEffect(() => {
-    const fetchLeads = async () => {
-      try {
-        // const response = await fetch("/api/leads");
-        // if (!response.ok) {
-        //   throw new Error("Failed to fetch data");
-        // }
-
-        const response = await fetch("/api/leads", { credentials: "include" });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch data");
-        }
-
-        const data = await response.json();
-
-        const transformedData = data.map((lead: any) => ({
-          id: lead.id,
-          name: lead.name,
-          role: lead.role,
-          avatar: lead.avatarUrl ?? "/default-avatar.png",
-          email: lead.email,
-          company: lead.company,
-          campaign: lead.campaign?.name ?? "N/A",
-          campaignDescription: lead.campaign?.description ?? null,
-          lastContactDate: lead.lastContactDate,
-          // Add default activity array or use from API if available
-          activity: lead.activity ?? ["#9ca3af", "#9ca3af", "#9ca3af"],
-          status: statusStyles[lead.status as keyof typeof statusStyles] || {
-            label: "Unknown",
-            color: "bg-gray-200 text-gray-700",
-          },
-        }));
-
-        setLeads(transformedData);
-      } catch (error) {
-        console.error("Error fetching leads:", error);
-        setError("Could not load leads. Please try again later.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchLeads();
-  }, []);
-
-  // ✅ filtered leads by search
-  const filteredLeads = useMemo(() => {
-    return leads.filter((lead) =>
-      [lead.name, lead.role, lead.campaign, lead.status.label]
-        .filter(Boolean)
-        .some((field) =>
-          field!.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-    );
-  }, [searchQuery, leads]);
+  }, [leads, campaignFilter, sortOrder]);
 
   const selectedLead = useMemo(() => {
     if (!selectedLeadId) return null;
     return leads.find((lead) => lead.id === selectedLeadId) || null;
   }, [selectedLeadId, leads]);
 
-  if (error) {
-    return <div className="p-4 text-red-500">{error}</div>;
+  if (isError) {
+    return <div className="p-4 text-red-500">{(error as Error).message}</div>;
   }
 
   return (
@@ -253,7 +239,6 @@ export default function LeadsPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              // ✅ Skeleton loader rows
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
                   <TableCell className="flex items-center gap-3">
@@ -331,6 +316,16 @@ export default function LeadsPage() {
           </TableBody>
         </Table>
       </div>
+
+      {/* ✅ Load more button for infinite query */}
+      {/* ✅ Load more button for infinite query */}
+      {hasNextPage && (
+        <div className="flex justify-center mt-4">
+          <Button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+            {isFetchingNextPage ? "Loading..." : "Load More"}
+          </Button>
+        </div>
+      )}
       <Drawer
         open={!!selectedLead}
         onOpenChange={(isOpen) => !isOpen && setSelectedLeadId(null)}
