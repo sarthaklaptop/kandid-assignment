@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -18,6 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { useFilterStore } from "@/stores/filterStore";
+import { useSelectionStore } from "@/stores/selectionStore";
+
 export default function ClientCampaignDetail({
   campaign,
   relatedLeads,
@@ -25,16 +28,19 @@ export default function ClientCampaignDetail({
   campaign: any;
   relatedLeads: any[];
 }) {
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  // Zustand filters
+  const { searchQuery, setSearchQuery, statusFilter, setStatusFilter } = useFilterStore();
+  const { selectedLeadId, setLead } = useSelectionStore();
 
+  // Filtered leads (memoized)
   const displayedLeads = useMemo(() => {
-  return relatedLeads.filter((lead) => {
-    const matchesName = lead.name.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "ALL" ? true : lead.status === statusFilter;
-    return matchesName && matchesStatus;
-  });
-}, [search, statusFilter, relatedLeads]);
+    return relatedLeads.filter((lead) => {
+      const matchesName = lead.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus =
+        statusFilter === "ALL" ? true : lead.status === statusFilter;
+      return matchesName && matchesStatus;
+    });
+  }, [searchQuery, statusFilter, relatedLeads]);
 
   return (
     <div className="space-y-6">
@@ -55,12 +61,12 @@ export default function ClientCampaignDetail({
       <div className="flex gap-4 items-center">
         <Input
           placeholder="Search by name..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="max-w-xs"
         />
 
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v)}>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
@@ -90,7 +96,15 @@ export default function ClientCampaignDetail({
           <TableBody>
             {displayedLeads.length > 0 ? (
               displayedLeads.map((lead) => (
-                <TableRow key={lead.id}>
+                <TableRow
+                  key={lead.id}
+                  className={`cursor-pointer ${
+                    selectedLeadId === String(lead.id) ? "bg-blue-50" : ""
+                  }`}
+                  onClick={() =>
+                    setLead(selectedLeadId === String(lead.id) ? null : String(lead.id))
+                  }
+                >
                   <TableCell className="font-medium">{lead.name}</TableCell>
                   <TableCell>{lead.role ?? "—"}</TableCell>
                   <TableCell>{lead.email}</TableCell>

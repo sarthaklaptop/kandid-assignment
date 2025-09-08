@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { campaigns, leads } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -57,3 +57,44 @@ export async function DELETE(
     );
   }
 }
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const resolvedParams = await params;
+    const leadId = parseInt(resolvedParams.id);
+
+    if (!leadId) {
+      return NextResponse.json({ error: "Invalid lead ID" }, { status: 400 });
+    }
+
+    // Fetch campaign details for this lead using your existing schema
+    const result = await db
+      .select({
+        id: campaigns.id,
+        name: campaigns.name,
+        description: campaigns.description,
+        status: campaigns.status,
+        createdAt: campaigns.createdAt,
+      })
+      .from(campaigns)
+      .innerJoin(leads, eq(leads.campaignId, campaigns.id))
+      .where(eq(leads.id, leadId))
+      .limit(1);
+
+    if (result.length === 0) {
+      return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(result[0]);
+  } catch (error) {
+    console.error("Error fetching campaign details:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+

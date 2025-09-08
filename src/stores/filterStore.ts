@@ -10,6 +10,6 @@ interface FilterState {
 export const useFilterStore = create<FilterState>((set) => ({
   searchQuery: "",
   setSearchQuery: (query) => set({ searchQuery: query }),
-  statusFilter: "all",
+  statusFilter: "ALL",
   setStatusFilter: (status) => set({ statusFilter: status }),
 }));
