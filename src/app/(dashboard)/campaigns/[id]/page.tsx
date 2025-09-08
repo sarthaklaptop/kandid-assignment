@@ -1,7 +1,10 @@
+// src/app/(dashboard)/campaigns/[id]/page.tsx
+
 import { db } from "@/db";
 import { campaigns, leads } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
+// import ClientCampaignDetail from "./ClientCampaignDetail";
 
 // ✅ shadcn ui
 import {
@@ -12,26 +15,15 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import ClientCampaignDetail from "./ClientCampaignDetail";
 
 interface CampaignPageProps {
   params: { id: string };
 }
 
-export default async function CampaignDetailPage({
-  params
-}: CampaignPageProps) {
-  const { id } = await params; 
-  const campaignId = Number(id);
-
+// ✅ Server Component
+export default async function CampaignDetailPage({ params }: CampaignPageProps) {
+  const campaignId = Number(params.id);
 
   const [campaign] = await db
     .select()
@@ -49,7 +41,7 @@ export default async function CampaignDetailPage({
 
   return (
     <div className="p-6 space-y-6">
-      {/* ✅ Breadcrumb */}
+      {/* ✅ Breadcrumb (still server-rendered) */}
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -64,55 +56,8 @@ export default async function CampaignDetailPage({
         </BreadcrumbList>
       </Breadcrumb>
 
-      {/* Campaign Info */}
-      <div>
-        <h1 className="text-2xl font-bold">{campaign.name}</h1>
-        <p className="text-gray-600">{campaign.description}</p>
-        <p className="mt-2">
-          <strong>Status:</strong> {campaign.status}
-        </p>
-        <p>
-          <strong>Created:</strong>{" "}
-          {new Date(campaign.createdAt).toLocaleDateString()}
-        </p>
-      </div>
-
-      {/* ✅ Leads Table (shadcn/ui) */}
-      <div>
-        <h2 className="text-xl font-semibold mb-3">Leads</h2>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Company</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {relatedLeads.length > 0 ? (
-                relatedLeads.map((lead) => (
-                  <TableRow key={lead.id}>
-                    <TableCell className="font-medium">{lead.name}</TableCell>
-                    <TableCell>{lead.role ?? "—"}</TableCell>
-                    <TableCell>{lead.email}</TableCell>
-                    <TableCell>{lead.company ?? "—"}</TableCell>
-                    <TableCell>{lead.status}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-6">
-                    No leads found for this campaign.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+      {/* ✅ Client component handles filtering/search */}
+      <ClientCampaignDetail campaign={campaign} relatedLeads={relatedLeads} />
     </div>
   );
 }
