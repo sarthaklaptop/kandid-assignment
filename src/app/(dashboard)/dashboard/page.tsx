@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth";
 import { headers as nextHeaders } from "next/headers";
-import Image from "next/image";
 
 export default async function DashboardPage() {
   // Convert ReadonlyHeaders → Headers
