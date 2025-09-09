@@ -66,7 +66,6 @@ export default function LeadsPage() {
   const { selectedLeadId, setLead: setSelectedLeadId } =
     useLeadsSelectionStore();
 
-  // ✅ Replace manual fetch with React Query infinite query
   const {
     data,
     isLoading,
@@ -77,11 +76,9 @@ export default function LeadsPage() {
     isFetchingNextPage,
   } = useLeadsInfinite({ q: searchQuery, status: statusFilter ?? undefined });
 
-  // Flatten pages → leads
   const leads = useMemo(() => {
     if (!data) return [];
 
-    // If you ever switch to infinite query later, handle both cases
     if (Array.isArray(data)) {
       return data.map((lead: any) => ({
         id: lead.id,
@@ -126,7 +123,6 @@ export default function LeadsPage() {
     return [];
   }, [data]);
 
-  // Apply filtering + sorting
   const processedLeads = useMemo(() => {
     let result = [...leads];
 
@@ -158,7 +154,6 @@ export default function LeadsPage() {
     <div className="flex flex-col w-full h-full p-4">
       <h1 className="text-2xl font-semibold mb-4">Leads</h1>
 
-      {/* ✅ Search input */}
       <div className="mb-4 w-full md:w-1/3">
         <Input
           placeholder="Search leads..."
@@ -317,8 +312,6 @@ export default function LeadsPage() {
         </Table>
       </div>
 
-      {/* ✅ Load more button for infinite query */}
-      {/* ✅ Load more button for infinite query */}
       {hasNextPage && (
         <div className="flex justify-center mt-4">
           <Button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
