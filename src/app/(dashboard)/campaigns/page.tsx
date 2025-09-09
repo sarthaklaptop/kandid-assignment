@@ -49,6 +49,7 @@ export default function CampaignsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [isDeleteCampaign, setIsDeleteCampaign] = useState(false);
 
   useEffect(() => {
     async function fetchCampaigns() {
@@ -110,7 +111,7 @@ export default function CampaignsPage() {
 
   async function handleDelete(id: number) {
     try {
-      // show loading toast
+      setIsDeleteCampaign(true);
       const toastId = toast.loading("Deleting campaign...");
 
       const res = await fetch(`/api/campaigns/${id}`, { method: "DELETE" });
@@ -121,11 +122,13 @@ export default function CampaignsPage() {
 
       setAllCampaigns((prev) => prev.filter((c) => c.id !== id));
 
-      // update toast to success
       toast.success("Campaign deleted successfully!", { id: toastId });
     } catch (err) {
       console.error("Failed to delete campaign", err);
       toast.error("Failed to delete campaign");
+    }
+    finally {
+      setIsDeleteCampaign(false);
     }
   }
 
@@ -182,7 +185,6 @@ export default function CampaignsPage() {
       return id;
     },
     onSuccess: () => {
-      toast.success("Campaign deleted!");
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
     },
     onError: () => {
@@ -365,13 +367,6 @@ export default function CampaignsPage() {
                       {new Date(c.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="space-x-2">
-                      {/* <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(c)}
-                      >
-                        Edit
-                      </Button> */}
                       <EditCampaignDialog
                         campaign={c}
                         onUpdated={(updated) =>
@@ -411,9 +406,15 @@ export default function CampaignsPage() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => deleteMutation.mutate(c.id)}
+                        onClick={() => {
+                          handleDelete(c.id);
+                          deleteMutation.mutate(c.id)}
+                        }
+                        disabled = {isDeleteCampaign}
                       >
-                        Delete
+                        {
+                          isDeleteCampaign ? "Deleting..." : "Delete"
+                        }
                       </Button>
                     </TableCell>
                   </TableRow>

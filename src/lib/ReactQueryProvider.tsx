@@ -24,6 +24,20 @@ type Campaign = {
   createdAt: string;
 };
 
+type LeadInCampaign = {
+  id: number;
+  name: string;
+  role: string | null;
+  avatarUrl: string | null;
+  email: string;
+  company: string | null;
+  status: string;
+};
+
+type CampaignWithLeads = Campaign & {
+  leads: LeadInCampaign[];
+};
+
 // Infinite leads
 export const useLeadsInfinite = (opts?: {
   q?: string;
@@ -56,10 +70,23 @@ export const useCampaigns = () =>
   useQuery<Campaign[]>({
     queryKey: ["campaigns"],
     queryFn: async () => {
-      const res = await fetch("/api/campaigns");
+      const res = await fetch("/api/campaigns", { credentials: "include" }); // Added credentials
       if (!res.ok) throw new Error("Failed to fetch campaigns");
       return res.json();
     },
+  });
+
+export const useCampaign = (id: string | number) =>
+  useQuery<CampaignWithLeads>({
+    queryKey: ["campaign", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/campaigns/${id}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch campaign data");
+      return res.json();
+    },
+    enabled: !!id,
   });
 
 // Optimistic mutation for lead status
@@ -101,12 +128,9 @@ export const useUpdateLeadStatus = () => {
 
       return { previous };
     },
-    onError: (
-      _err,
-      _vars,
-      context: unknown
-    ) => {
-      const previous = (context as { previous?: InfiniteData<any> } | undefined)?.previous;
+    onError: (_err, _vars, context: unknown) => {
+      const previous = (context as { previous?: InfiniteData<any> } | undefined)
+        ?.previous;
       if (previous) {
         qc.setQueryData(["leads"], previous);
       }

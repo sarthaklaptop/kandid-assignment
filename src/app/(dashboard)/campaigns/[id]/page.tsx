@@ -1,88 +1,84 @@
-// app/(dashboard)/campaigns/page.tsx (client)
 "use client";
 
-import {
-  Table, TableHeader, TableRow, TableHead, TableBody, TableCell
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { useCampaigns } from "@/lib/ReactQueryProvider";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import ClientCampaignDetail from "./ClientCampaignDetail";
+import { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { use } from "react"; // 👈 new import
 
-export default function CampaignsPageClient() {
-  const { data, isLoading, isError, error } = useCampaigns();
+interface CampaignPageProps {
+  params: Promise<{ id: string }>; // 👈 params is a Promise now
+}
 
-  if (isLoading) {
+export default function CampaignDetailPage({ params }: CampaignPageProps) {
+  const { id } = use(params); // 👈 unwrap params with React.use()
+  const [campaignData, setCampaignData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCampaign = async () => {
+      try {
+        const res = await fetch(`/api/campaigns/${id}`, {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCampaignData(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch campaign:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCampaign();
+  }, [id]);
+
+  if (loading) {
     return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-6"><Skeleton className="h-8 w-64" /></h1>
-        <div className="rounded-md border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Total Leads</TableHead>
-                <TableHead>Response Rate</TableHead>
-                <TableHead>Progress</TableHead>
-                <TableHead>Created At</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-10" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-10" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-48" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+      <div className="p-6 space-y-6">
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-32 w-full" />
         </div>
       </div>
     );
   }
 
-  if (isError) {
-    return <div className="p-6 text-red-600">Error loading campaigns: {(error as Error).message}</div>;
+  if (!campaignData) {
+    return <div className="p-6">Campaign not found</div>;
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Campaigns</h1>
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Total Leads</TableHead>
-              <TableHead>Response Rate</TableHead>
-              <TableHead>Progress</TableHead>
-              <TableHead>Created At</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data?.map((c: any) => {
-              const responseRate = c.totalLeads > 0 ? Math.round((c.successfulLeads / c.totalLeads) * 100) : 0;
-              return (
-                <TableRow key={c.id}>
-                  <TableCell><Link href={`/campaigns/${c.id}`} className="text-blue-600 hover:underline">{c.name}</Link></TableCell>
-                  <TableCell><Badge>{c.status}</Badge></TableCell>
-                  <TableCell>{c.totalLeads}</TableCell>
-                  <TableCell>{responseRate}%</TableCell>
-                  <TableCell className="w-48"><Progress value={responseRate} /></TableCell>
-                  <TableCell>{new Date(c.createdAt).toLocaleDateString()}</TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+    <div className="p-6 space-y-6">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/campaigns">Campaigns</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{campaignData.name}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      <ClientCampaignDetail
+        campaign={campaignData}
+        relatedLeads={campaignData.leads || []}
+      />
     </div>
   );
 }

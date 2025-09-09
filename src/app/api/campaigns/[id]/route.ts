@@ -1,32 +1,72 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { campaigns, leads } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { auth } from "@/lib/auth";
 
-
-export async function PATCH(
-  req: Request,
-  context: { params: Promise<{ id: string }> }
+// GET a single campaign and its leads
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const params = await context.params;
-    const id = parseInt(params.id);
-    const { name, status } = await req.json();
+    const { id } = await params; // 👈 await it
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = session.user.id;
+    const campaignId = parseInt(id, 10);
 
-    const [updated] = await db
-      .update(campaigns)
-      .set({ name, status })
-      .where(eq(campaigns.id, id))
-      .returning();
+    const campaignData = await db.query.campaigns.findFirst({
+      where: and(eq(campaigns.id, campaignId), eq(campaigns.userId, userId)),
+      with: { leads: true },
+    });
 
-    if (!updated) {
+    if (!campaignData) {
       return NextResponse.json(
         { error: "Campaign not found" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(updated);
+    return NextResponse.json(campaignData);
+  } catch (error) {
+    console.error("Error fetching campaign:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// UPDATE a campaign
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = await params; // 👈 await here
+    const session = await auth.api.getSession({ headers: req.headers });
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = session.user.id;
+    const campaignId = parseInt(id, 10);
+
+    const campaignData = await db.query.campaigns.findFirst({
+      where: and(eq(campaigns.id, campaignId), eq(campaigns.userId, userId)),
+      with: { leads: true },
+    });
+
+    if (!campaignData) {
+      return NextResponse.json(
+        { error: "Campaign not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(campaignData);
   } catch (err) {
     console.error("Error updating campaign:", err);
     return NextResponse.json(
@@ -36,17 +76,34 @@ export async function PATCH(
   }
 }
 
-
+// DELETE a campaign
 export async function DELETE(
   req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = parseInt(params.id);
+    // ✅ Secure the endpoint
+    const session = await auth.api.getSession({ headers: req.headers });
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = session.user.id;
+    const campaignId = parseInt(params.id);
 
-    await db.delete(leads).where(eq(leads.campaignId, id));
+    // ✅ Delete the campaign only if the ID and userId match
+    const [deleted] = await db
+      .delete(campaigns)
+      .where(and(eq(campaigns.id, campaignId), eq(campaigns.userId, userId)))
+      .returning();
 
-    await db.delete(campaigns).where(eq(campaigns.id, id));
+    if (!deleted) {
+      return NextResponse.json(
+        { error: "Campaign not found or not authorized" },
+        { status: 404 }
+      );
+    }
+
+    // Note: Drizzle's onDelete: "cascade" should handle deleting related leads automatically
 
     return NextResponse.json({ success: true });
   } catch (err) {
@@ -57,44 +114,3 @@ export async function DELETE(
     );
   }
 }
-
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const resolvedParams = await params;
-    const leadId = parseInt(resolvedParams.id);
-
-    if (!leadId) {
-      return NextResponse.json({ error: "Invalid lead ID" }, { status: 400 });
-    }
-
-    // Fetch campaign details for this lead using your existing schema
-    const result = await db
-      .select({
-        id: campaigns.id,
-        name: campaigns.name,
-        description: campaigns.description,
-        status: campaigns.status,
-        createdAt: campaigns.createdAt,
-      })
-      .from(campaigns)
-      .innerJoin(leads, eq(leads.campaignId, campaigns.id))
-      .where(eq(leads.id, leadId))
-      .limit(1);
-
-    if (result.length === 0) {
-      return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
-    }
-
-    return NextResponse.json(result[0]);
-  } catch (error) {
-    console.error("Error fetching campaign details:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
-

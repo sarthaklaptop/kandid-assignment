@@ -28,14 +28,24 @@ export default function ClientCampaignDetail({
   campaign: any;
   relatedLeads: any[];
 }) {
+  if (!campaign) {
+    return <div className="p-4">No campaign data available.</div>;
+  }
+  if (!relatedLeads) {
+    return <div className="p-4">No leads found.</div>;
+  }
+
   // Zustand filters
-  const { searchQuery, setSearchQuery, statusFilter, setStatusFilter } = useFilterStore();
+  const { searchQuery, setSearchQuery, statusFilter, setStatusFilter } =
+    useFilterStore();
   const { selectedLeadId, setLead } = useSelectionStore();
 
   // Filtered leads (memoized)
   const displayedLeads = useMemo(() => {
     return relatedLeads.filter((lead) => {
-      const matchesName = lead.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesName = (lead.name ?? "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
       const matchesStatus =
         statusFilter === "ALL" ? true : lead.status === statusFilter;
       return matchesName && matchesStatus;
@@ -102,13 +112,17 @@ export default function ClientCampaignDetail({
                     selectedLeadId === String(lead.id) ? "bg-blue-50" : ""
                   }`}
                   onClick={() =>
-                    setLead(selectedLeadId === String(lead.id) ? null : String(lead.id))
+                    setLead(
+                      selectedLeadId === String(lead.id)
+                        ? null
+                        : String(lead.id)
+                    )
                   }
                 >
                   <TableCell className="font-medium">{lead.name}</TableCell>
-                  <TableCell>{lead.role ?? "—"}</TableCell>
-                  <TableCell>{lead.email}</TableCell>
-                  <TableCell>{lead.company ?? "—"}</TableCell>
+                  <TableCell>{lead.role ?? "-"}</TableCell>
+                  <TableCell>{lead.email ?? "-"}</TableCell>
+                  <TableCell>{lead.company ?? "-"}</TableCell>
                   <TableCell>
                     <span
                       className={`px-2 py-1 rounded text-xs font-medium
