@@ -27,23 +27,6 @@ import { useLeadsFilterStore } from "@/stores/leadsFilterStore";
 import { useLeadsSelectionStore } from "@/stores/leadsSelectionStore";
 import { useLeadsInfinite } from "@/lib/ReactQueryProvider";
 
-type Lead = {
-  id: number;
-  name: string;
-  role: string | null;
-  avatar: string | null;
-  campaign: string | null;
-  campaignDescription?: string | null;
-  email: string;
-  company: string | null;
-  lastContactDate: string | null;
-  activity?: string[];
-  status: {
-    label: string;
-    color: string;
-  };
-};
-
 const statusStyles = {
   PENDING: { label: "Pending", color: "bg-yellow-100 text-yellow-700" },
   CONTACTED: { label: "Contacted", color: "bg-blue-100 text-blue-700" },

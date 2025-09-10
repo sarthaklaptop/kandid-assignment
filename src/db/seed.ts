@@ -1,4 +1,3 @@
-// src/db/seed.ts
 import { db } from "./index.ts";
 import { user } from "./auth-schema.ts";
 import { leads, campaigns } from "./schema.ts";
@@ -8,7 +7,6 @@ async function seed() {
   console.log("🌱 Seeding database...");
 
   try {
-    // --- Insert base users (owners of leads) ---
     const usersData = [
       {
         id: "u1",
@@ -50,7 +48,6 @@ async function seed() {
     await db.insert(user).values(usersData).onConflictDoNothing();
     console.log("✅ Inserted Users");
 
-    // --- Insert Campaigns (matching your exact schema) ---
     const campaignsData = [
       { 
         name: "Juicy Chemistry", 
@@ -82,7 +79,6 @@ async function seed() {
     const insertedCampaigns = await db.insert(campaigns).values(baseCampaigns).returning();
     console.log("✅ Inserted Campaigns");
 
-    // --- Generate 100 dummy leads (matching your exact schema) ---
     const statusOptions: ("PENDING" | "CONTACTED" | "RESPONDED" | "CONVERTED" | "DO_NOT_CONTACT")[] = [
       "PENDING", "CONTACTED", "RESPONDED", "CONVERTED", "DO_NOT_CONTACT"
     ];
@@ -99,7 +95,7 @@ async function seed() {
         company: faker.company.name(),
         avatarUrl: faker.image.avatar(), 
         status: randomStatus,
-        campaignId: randomCampaign.id, // This will be the auto-generated serial ID
+        campaignId: randomCampaign.id, 
         userId: randomUser.id,
         lastContactDate: faker.date.recent({ days: 30 }),
       };

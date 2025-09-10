@@ -2,14 +2,12 @@ import { auth } from "@/lib/auth";
 import { headers as nextHeaders } from "next/headers";
 
 export default async function DashboardPage() {
-  // Convert ReadonlyHeaders → Headers
   const reqHeaders = new Headers();
   const headers = await nextHeaders();
   headers.forEach((value, key) => {
     reqHeaders.append(key, value);
   });
 
-  // Get session from BetterAuth
   const session = await auth.api.getSession({ headers: reqHeaders });
   const user = session?.user;
 

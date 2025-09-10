@@ -1,4 +1,3 @@
-// src/lib/queries.ts
 import {
   useInfiniteQuery,
   useQuery,
@@ -38,7 +37,6 @@ type CampaignWithLeads = Campaign & {
   leads: LeadInCampaign[];
 };
 
-// Infinite leads
 export const useLeadsInfinite = (opts?: {
   q?: string;
   status?: string;
@@ -57,7 +55,6 @@ export const useLeadsInfinite = (opts?: {
 
       const res = await fetch(url.toString());
       if (!res.ok) throw new Error("Failed to fetch leads");
-      // expected shape: { items: Lead[], nextPage: number | null }
       return res.json();
     },
     getNextPageParam: (lastPage: any) => lastPage?.nextPage ?? null,
@@ -65,7 +62,6 @@ export const useLeadsInfinite = (opts?: {
   });
 };
 
-// Campaigns
 export const useCampaigns = () =>
   useQuery<Campaign[]>({
     queryKey: ["campaigns"],
@@ -89,14 +85,13 @@ export const useCampaign = (id: string | number) =>
     enabled: !!id,
   });
 
-// Optimistic mutation for lead status
 export const useUpdateLeadStatus = () => {
   const qc = useQueryClient();
 
   return useMutation<
-    Lead, // return type
-    Error, // error type
-    { id: string | number; status: string } // variables type
+    Lead, 
+    Error, 
+    { id: string | number; status: string } 
   >({
     mutationFn: async ({ id, status }) => {
       const res = await fetch(`/api/leads/${id}`, {
@@ -112,7 +107,6 @@ export const useUpdateLeadStatus = () => {
 
       const previous = qc.getQueryData<InfiniteData<any>>(["leads"]);
 
-      // optimistic update
       qc.setQueryData<InfiniteData<any>>(["leads"], (old) => {
         if (!old) return old;
         return {

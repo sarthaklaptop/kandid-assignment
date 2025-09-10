@@ -1,5 +1,3 @@
-// src/app/api/dev/seed-user/route.ts
-
 import { db } from "@/db";
 import { campaigns, leads } from "@/db/schema";
 import { auth } from "@/lib/auth";
@@ -8,14 +6,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Authenticate the user
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const userId = session.user.id;
 
-    // 2. Create a few sample campaigns for this user
     const campaignsData = [
       {
         name: "Q1 Marketing Push",
@@ -35,7 +31,6 @@ export async function POST(request: NextRequest) {
       .values(campaignsData)
       .returning();
 
-    // 3. Create a few sample leads for these new campaigns
     const leadsData = Array.from({ length: 15 }).map(() => {
         const randomCampaign = faker.helpers.arrayElement(insertedCampaigns);
         return {
@@ -46,7 +41,7 @@ export async function POST(request: NextRequest) {
             avatarUrl: faker.image.avatar(),
             status: faker.helpers.arrayElement(["PENDING", "CONTACTED", "RESPONDED"]),
             campaignId: randomCampaign.id,
-            userId: userId, // Assign lead to the current user
+            userId: userId,
             lastContactDate: faker.date.recent({ days: 30 }),
         }
     });

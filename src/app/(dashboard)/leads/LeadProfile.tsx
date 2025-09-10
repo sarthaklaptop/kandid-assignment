@@ -10,7 +10,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FaPhoneAlt } from "react-icons/fa";
 import { RiFlashlightFill } from "react-icons/ri";
 import toast from "react-hot-toast";
-import { RiProgress4Line } from "react-icons/ri";
 
 type Lead = {
   id: number;
@@ -105,7 +104,6 @@ export function LeadProfile({ lead }: { lead: Lead }) {
 
   return (
     <div className="p-4 flex flex-col h-full">
-      {/* Header */}
       <DrawerHeader className="flex items-start gap-4">
         <Image
           src={lead.avatar!}
@@ -132,7 +130,6 @@ export function LeadProfile({ lead }: { lead: Lead }) {
 
       <Separator className="my-4" />
 
-      {/* Contact Details */}
       <div className="space-y-3 text-sm">
         <p>
           <span className="font-medium">📧 Email:</span> {lead.email}
@@ -149,7 +146,6 @@ export function LeadProfile({ lead }: { lead: Lead }) {
 
       <Separator className="my-4" />
 
-      {/* Campaign Info */}
       <div className="space-y-2 text-sm">
         <p className="font-medium">📌 Campaign Info</p>
         {isLoadingCampaign ? (
@@ -194,7 +190,6 @@ export function LeadProfile({ lead }: { lead: Lead }) {
 
       <Separator className="my-4" />
 
-      {/* Interaction History */}
       <div className="space-y-4 flex-1 overflow-y-auto">
         <p className="font-medium">📝 Interaction History</p>
         {isLoadingInteractions ? (

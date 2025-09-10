@@ -18,7 +18,6 @@ import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 import { IoChevronBack } from "react-icons/io5";
 
 import toast, { Toaster } from 'react-hot-toast';
-import { ca } from "zod/v4/locales";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "signup" | "emailLogin">("login");

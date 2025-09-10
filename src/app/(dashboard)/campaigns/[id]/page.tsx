@@ -12,14 +12,14 @@ import {
 import ClientCampaignDetail from "./ClientCampaignDetail";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { use } from "react"; // 👈 new import
+import { use } from "react"; 
 
 interface CampaignPageProps {
-  params: Promise<{ id: string }>; // 👈 params is a Promise now
+  params: Promise<{ id: string }>; 
 }
 
 export default function CampaignDetailPage({ params }: CampaignPageProps) {
-  const { id } = use(params); // 👈 unwrap params with React.use()
+  const { id } = use(params);
   const [campaignData, setCampaignData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

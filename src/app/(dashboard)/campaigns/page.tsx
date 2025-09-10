@@ -67,7 +67,6 @@ export default function CampaignsPage() {
     fetchCampaigns();
   }, []);
 
-  // ✅ Summary stats
   const totalLeads = allCampaigns.reduce((sum, c) => sum + c.totalLeads, 0);
   const totalResponses = allCampaigns.reduce(
     (sum, c) => sum + c.successfulLeads,
@@ -76,7 +75,6 @@ export default function CampaignsPage() {
   const avgResponseRate =
     totalLeads > 0 ? Math.round((totalResponses / totalLeads) * 100) : 0;
 
-  // ✅ Filter + Sort logic
   const displayedCampaigns = useMemo(() => {
     let filtered = [...allCampaigns];
     if (statusFilter !== "All") {
@@ -132,30 +130,8 @@ export default function CampaignsPage() {
     }
   }
 
-  async function handleStatusChange(id: number, newStatus: string) {
-    try {
-      const toastId = toast.loading("Updating status...");
-      const res = await fetch(`/api/campaigns/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (!res.ok) throw new Error("Failed to update status");
-
-      const updated = await res.json();
-      setAllCampaigns((prev) => prev.map((c) => (c.id === id ? updated : c)));
-
-      toast.success("Status updated!", { id: toastId });
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to update status");
-    }
-  }
-
   const queryClient = useQueryClient();
 
-  // ✅ Status mutation
   const statusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
       const res = await fetch(`/api/campaigns/${id}`, {
@@ -175,7 +151,6 @@ export default function CampaignsPage() {
     },
   });
 
-  // ✅ Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const res = await fetch(`/api/campaigns/${id}`, {
@@ -196,7 +171,6 @@ export default function CampaignsPage() {
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Campaigns</h1>
 
-      {/* ✅ Summary Cards with Skeleton */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader>
@@ -248,7 +222,6 @@ export default function CampaignsPage() {
         </Card>
       </div>
 
-      {/* ✅ Status Filter */}
       <div className="flex justify-end mb-4">
         <Select onValueChange={setStatusFilter} defaultValue="All">
           <SelectTrigger className="w-48">
@@ -264,7 +237,6 @@ export default function CampaignsPage() {
         </Select>
       </div>
 
-      {/* ✅ Campaigns Table */}
       <Table>
         <TableHeader>
           <TableRow>

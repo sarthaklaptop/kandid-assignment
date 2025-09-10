@@ -35,12 +35,10 @@ export default function ClientCampaignDetail({
     return <div className="p-4">No leads found.</div>;
   }
 
-  // Zustand filters
   const { searchQuery, setSearchQuery, statusFilter, setStatusFilter } =
     useFilterStore();
   const { selectedLeadId, setLead } = useSelectionStore();
 
-  // Filtered leads (memoized)
   const displayedLeads = useMemo(() => {
     return relatedLeads.filter((lead) => {
       const matchesName = (lead.name ?? "")
@@ -54,7 +52,6 @@ export default function ClientCampaignDetail({
 
   return (
     <div className="space-y-6">
-      {/* Campaign Info */}
       <div>
         <h1 className="text-2xl font-bold">{campaign.name}</h1>
         <p className="text-gray-600">{campaign.description}</p>
@@ -67,7 +64,6 @@ export default function ClientCampaignDetail({
         </p>
       </div>
 
-      {/* Filters */}
       <div className="flex gap-4 items-center">
         <Input
           placeholder="Search by name..."
@@ -91,7 +87,6 @@ export default function ClientCampaignDetail({
         </Select>
       </div>
 
-      {/* Leads Table */}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
